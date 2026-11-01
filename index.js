@@ -3,73 +3,142 @@
   const React = window.React;
   const TRANSLATIONS = {
     en: {
+      tileOpen: "To-Do List — {n} open",
+      tileNone: "To-Do List — no open tasks",
+      closeLabel: "Close",
       todoListHeader: "To-Do List",
       addTaskTitle: "Add Task",
       todoEmptyState: "All caught up! Add a task to start.",
       todoPlaceholder: "New task..."
     },
     tr: {
+      tileOpen: "Yapılacaklar — {n} açık görev",
+      tileNone: "Yapılacaklar — açık görev yok",
+      closeLabel: "Kapat",
       todoListHeader: "Yapılacaklar Listesi",
       addTaskTitle: "Görev Ekle",
       todoEmptyState: "Hepsi tamam! Başlamak için bir görev ekleyin.",
       todoPlaceholder: "Yeni görev..."
     },
     de: {
+      tileOpen: "Aufgaben — {n} offen",
+      tileNone: "Aufgaben — nichts offen",
+      closeLabel: "Schließen",
       todoListHeader: "To-Do-Liste",
       addTaskTitle: "Aufgabe hinzufügen",
       todoEmptyState: "Alles erledigt!",
       todoPlaceholder: "Neue Aufgabe..."
     },
     fr: {
+      tileOpen: "Tâches — {n} ouverte(s)",
+      tileNone: "Tâches — aucune ouverte",
+      closeLabel: "Fermer",
       todoListHeader: "Liste de tâches",
       addTaskTitle: "Ajouter une tâche",
       todoEmptyState: "Tout est fait ! Ajoutez une tâche pour commencer.",
       todoPlaceholder: "Nouvelle tâche..."
     },
     es: {
+      tileOpen: "Tareas — {n} abierta(s)",
+      tileNone: "Tareas — ninguna abierta",
+      closeLabel: "Cerrar",
       todoListHeader: "Lista de tareas",
       addTaskTitle: "Añadir tarea",
       todoEmptyState: "¡Todo al día! Añade una tarea para empezar.",
       todoPlaceholder: "Nueva tarea..."
     },
     ru: {
+      tileOpen: "Дела — открыто: {n}",
+      tileNone: "Дела — открытых задач нет",
+      closeLabel: "Закрыть",
       todoListHeader: "Список дел",
       addTaskTitle: "Добавить задачу",
       todoEmptyState: "Всё готово! Добавьте задачу, чтобы начать.",
       todoPlaceholder: "Новая задача..."
     },
     ja: {
+      tileOpen: "To-Do — 未完了 {n} 件",
+      tileNone: "To-Do — 未完了なし",
+      closeLabel: "閉じる",
       todoListHeader: "To-Do リスト",
       addTaskTitle: "タスクを追加",
       todoEmptyState: "すべて完了！タスクを追加して始めましょう。",
       todoPlaceholder: "新しいタスク..."
     },
     zh: {
+      tileOpen: "待办 — {n} 项未完成",
+      tileNone: "待办 — 没有未完成项",
+      closeLabel: "关闭",
       todoListHeader: "待办事项列表",
       addTaskTitle: "添加任务",
       todoEmptyState: "全部完成！添加一个任务开始吧。",
       todoPlaceholder: "新任务..."
     },
     ar: {
+      tileOpen: "المهام — {n} مفتوحة",
+      tileNone: "المهام — لا مهام مفتوحة",
+      closeLabel: "إغلاق",
       todoListHeader: "قائمة المهام",
       addTaskTitle: "إضافة مهمة",
       todoEmptyState: "تم إنجاز كل شيء! أضف مهمة للبدء.",
       todoPlaceholder: "مهمة جديدة..."
     },
     hi: {
+      tileOpen: "कार्य — {n} खुले",
+      tileNone: "कार्य — कोई खुला कार्य नहीं",
+      closeLabel: "बंद करें",
       todoListHeader: "टू-डू सूची",
       addTaskTitle: "कार्य जोड़ें",
       todoEmptyState: "सब पूरा हो गया! शुरू करने के लिए एक कार्य जोड़ें।",
       todoPlaceholder: "नया कार्य..."
     }
   };
+  const ICON_FONT = "'Material Symbols Rounded', 'Material Symbols Outlined'";
+  const iconStyle = (fill, size) => ({
+    fontFamily: ICON_FONT,
+    fontVariationSettings: `'FILL' ${fill ? 1 : 0}, 'wght' 400`,
+    fontSize: size
+  });
+  const TODO_BTN_ID = "todolist-plugin-btn";
+  const barExt = () => {
+    const ext = window.KoBarExtensions;
+    return typeof ext?.setBarItemState === "function" ? ext : null;
+  };
+  let barLocale = null;
+  const tileText = (key, n) => {
+    const lang = barLocale || window.useAppStore?.getState?.().language || "en";
+    const dict = TRANSLATIONS[lang] || TRANSLATIONS["en"];
+    return (dict[key] || TRANSLATIONS.en[key]).replace("{n}", new Intl.NumberFormat(lang).format(n));
+  };
+  const readTodos = () => {
+    try {
+      const saved = localStorage.getItem("kobar_plugin_todos");
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  };
+  const publishTodoState = (todos) => {
+    const ext = barExt();
+    if (!ext) return;
+    try {
+      const open = todos.filter((x) => !x.completed).length;
+      ext.setBarItemState(TODO_BTN_ID, {
+        label: tileText(open > 0 ? "tileOpen" : "tileNone", open),
+        badge: open,
+        icon: "checklist"
+      });
+    } catch (e) {
+    }
+  };
   const TodoListPanel = (props) => {
     const { onClose, anchorRect } = props;
     const store = window.useAppStore();
     const edgePosition = store.edgePosition;
-    const design = store.design;
-    const isMac = store.isMac;
-    const glassOpacity = store.glassOpacity;
+    store.design;
+    store.isMac;
+    store.glassOpacity;
     const screenBounds = store.screenBounds;
     const isSmartPositioning = store.isPopupSmartPositioning;
     const orientation = store.orientation;
@@ -92,6 +161,7 @@
     });
     React.useEffect(() => {
       localStorage.setItem("kobar_plugin_todos", JSON.stringify(todos));
+      publishTodoState(todos);
     }, [todos]);
     const addTodo = () => {
       setTodos([{ id: Date.now().toString(), text: "", completed: false }, ...todos]);
@@ -124,10 +194,11 @@
       const style = {
         position: "absolute",
         zIndex: 99999,
-        backgroundColor: design === "style2" ? `color-mix(in srgb, var(--theme-surface) ${glassOpacity}%, transparent)` : "var(--theme-surface)",
-        borderColor: design === "style2" ? "rgba(255, 255, 255, 0.1)" : "var(--theme-border)",
-        backdropFilter: design === "style2" ? isMac ? "blur(8px)" : "blur(20px)" : "none",
-        WebkitBackdropFilter: design === "style2" ? isMac ? "blur(8px)" : "blur(20px)" : "none",
+        backgroundColor: "var(--kb-bg-shell, var(--theme-bg-dark, #1b1e27))",
+        border: "1px solid var(--kb-stroke-subtle, var(--theme-border, rgba(255,255,255,0.1)))",
+        borderRadius: 32,
+        boxShadow: "var(--kb-shadow-e3, 0 12px 32px rgba(0,0,0,0.45))",
+        color: "var(--kb-fg-1, #f2f3f7)",
         willChange: "transform, opacity",
         transitionProperty: "opacity, transform, filter"
       };
@@ -237,42 +308,60 @@
         row.style.opacity = "1";
       }
     };
+    const tileBg = "var(--kb-bg-tile, var(--theme-surface, #242833))";
     return /* @__PURE__ */ window.React.createElement(
       "div",
       {
         ref: popupRef,
-        className: "w-80 border shadow-2xl pointer-events-auto animate-in fade-in zoom-in duration-200 overflow-hidden flex flex-col rounded-xl",
-        style: getPopupStyle()
+        className: "pointer-events-auto overflow-hidden flex flex-col",
+        style: { ...getPopupStyle(), width: 320, padding: 20, gap: 16 }
       },
-      /* @__PURE__ */ window.React.createElement("div", { className: "flex justify-between items-center p-4 pb-3 relative" }, /* @__PURE__ */ window.React.createElement("span", { className: "text-[10px] uppercase tracking-wider text-slate-500 font-bold ml-1 drag-region w-full" }, t("todoListHeader")), /* @__PURE__ */ window.React.createElement("span", { className: "absolute left-1/2 -translate-x-1/2 text-[10px] text-slate-400 font-bold tracking-wider pointer-events-none" }, completedCount, " / ", todos.length), /* @__PURE__ */ window.React.createElement("div", { className: "flex gap-1 shrink-0" }, /* @__PURE__ */ window.React.createElement(
-        "button",
+      /* @__PURE__ */ window.React.createElement("div", { className: "flex items-center", style: { gap: 12 } }, /* @__PURE__ */ window.React.createElement(
+        "div",
         {
-          onClick: addTodo,
-          className: "w-6 h-6 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 flex items-center justify-center transition-all no-drag-region",
-          title: t("addTaskTitle")
+          className: "flex items-center justify-center shrink-0",
+          style: { width: 44, height: 44, borderRadius: 15, background: "var(--kb-bg-container, var(--theme-accent-glow, rgba(99,102,241,0.18)))", color: "var(--kb-accent, var(--theme-primary, #8b9cff))" }
         },
-        /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined text-[16px]" }, "add")
-      ), /* @__PURE__ */ window.React.createElement(
+        /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined", style: iconStyle(true, 24) }, "checklist")
+      ), /* @__PURE__ */ window.React.createElement("div", { className: "flex-1 min-w-0 drag-region" }, /* @__PURE__ */ window.React.createElement("div", { style: { fontFamily: "var(--kb-font-display, inherit)", fontSize: 19, fontWeight: 600, lineHeight: 1.2 }, className: "truncate" }, t("todoListHeader")), /* @__PURE__ */ window.React.createElement("div", { style: { fontSize: 12, color: "var(--kb-fg-2, #b4b8c6)", fontVariantNumeric: "tabular-nums" } }, completedCount, " / ", todos.length)), /* @__PURE__ */ window.React.createElement(
         "button",
         {
           onClick: onClose,
-          className: "w-6 h-6 rounded-lg bg-white/5 text-slate-400 hover:text-white hover:bg-red-500/20 flex items-center justify-center transition-all no-drag-region"
+          "aria-label": t("closeLabel"),
+          title: t("closeLabel"),
+          className: "flex items-center justify-center shrink-0 no-drag-region",
+          style: { width: 36, height: 36, borderRadius: 999, background: "var(--kb-bg-inset, rgba(255,255,255,0.06))", color: "var(--kb-fg-1, #f2f3f7)" }
         },
-        /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined text-[16px]" }, "close")
-      ))),
-      /* @__PURE__ */ window.React.createElement("div", { className: "w-full h-[2px] bg-black/20" }, /* @__PURE__ */ window.React.createElement(
+        /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined", style: iconStyle(false, 20) }, "close")
+      )),
+      /* @__PURE__ */ window.React.createElement(
+        "button",
+        {
+          onClick: addTodo,
+          title: t("addTaskTitle"),
+          className: "flex items-center justify-center no-drag-region",
+          style: { height: 44, borderRadius: 999, gap: 8, background: "var(--kb-accent, var(--theme-primary, #8b9cff))", color: "var(--kb-on-accent, #101218)", fontWeight: 600, fontSize: 14 }
+        },
+        /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined", style: iconStyle(false, 20) }, "add"),
+        t("addTaskTitle")
+      ),
+      /* @__PURE__ */ window.React.createElement(
         "div",
         {
-          className: "h-full bg-primary transition-all duration-300",
-          style: { width: `${progress}%` }
-        }
-      )),
-      /* @__PURE__ */ window.React.createElement("div", { className: "flex-1 p-2 max-h-80 overflow-y-auto custom-scrollbar flex flex-col gap-1" }, todos.length === 0 ? /* @__PURE__ */ window.React.createElement("div", { className: "text-center text-slate-500 text-sm mt-8 mb-8" }, t("todoEmptyState")) : todos.map((todo, index) => /* @__PURE__ */ window.React.createElement(
+          role: "progressbar",
+          "aria-valuemin": 0,
+          "aria-valuemax": 100,
+          "aria-valuenow": Math.round(progress),
+          style: { height: 4, borderRadius: 999, background: "var(--kb-bg-inset, rgba(255,255,255,0.08))", overflow: "hidden" }
+        },
+        /* @__PURE__ */ window.React.createElement("div", { style: { height: "100%", width: `${progress}%`, background: "var(--kb-accent, var(--theme-primary, #8b9cff))", borderRadius: 999 } })
+      ),
+      /* @__PURE__ */ window.React.createElement("div", { className: "overflow-y-auto custom-scrollbar flex flex-col", style: { gap: 8, maxHeight: 320 } }, todos.length === 0 ? /* @__PURE__ */ window.React.createElement("div", { className: "text-center text-sm", style: { color: "var(--kb-fg-2, #b4b8c6)", margin: "24px 0" } }, t("todoEmptyState")) : todos.map((todo, index) => /* @__PURE__ */ window.React.createElement(
         "div",
         {
           key: todo.id,
-          className: `todo-item flex items-center gap-2 p-2 rounded-lg transition-colors border border-transparent hover:border-white/5 
-                                ${draggedItemIndex === index ? "opacity-40 scale-[0.98]" : "hover:bg-black/10"}`,
+          className: "todo-item flex items-center",
+          style: { gap: 8, minHeight: 48, padding: "4px 8px", borderRadius: 16, background: tileBg, opacity: draggedItemIndex === index ? 0.5 : 1 },
           onDragEnter: (e) => handleDragEnter(e, index),
           onDragEnd: handleDragEnd,
           onDragOver: (e) => e.preventDefault()
@@ -282,18 +371,27 @@
           {
             draggable: true,
             onDragStart: (e) => handleDragStart(e, index),
-            className: "opacity-0 group-hover:opacity-100 opacity-30 hover:opacity-100 flex items-center justify-center cursor-move no-drag-region shrink-0 text-slate-500 hover:text-white transition-opacity"
+            className: "flex items-center justify-center cursor-move no-drag-region shrink-0",
+            style: { color: "var(--kb-fg-3, #868b9b)" }
           },
-          /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined text-[18px]" }, "drag_indicator")
+          /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined", style: iconStyle(false, 20) }, "drag_indicator")
         ),
         /* @__PURE__ */ window.React.createElement(
           "button",
           {
             onClick: () => toggleTodo(todo.id),
-            className: `w-5 h-5 rounded-full border-2 flex items-center justify-center no-drag-region shrink-0 transition-colors
-                                    ${todo.completed ? "border-primary bg-primary text-slate-900" : "border-slate-500 hover:border-slate-400"}`
+            "aria-pressed": !!todo.completed,
+            className: "flex items-center justify-center no-drag-region shrink-0",
+            style: {
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              background: todo.completed ? "var(--kb-accent, var(--theme-primary, #8b9cff))" : "transparent",
+              color: todo.completed ? "var(--kb-on-accent, #101218)" : "var(--kb-fg-3, #868b9b)",
+              border: todo.completed ? "none" : "2px solid var(--kb-stroke-control, rgba(255,255,255,0.3))"
+            }
           },
-          todo.completed && /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined text-[14px]" }, "check")
+          todo.completed && /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined", style: iconStyle(false, 18) }, "check")
         ),
         /* @__PURE__ */ window.React.createElement(
           "input",
@@ -303,17 +401,19 @@
             value: todo.text,
             onChange: (e) => updateTodoText(todo.id, e.target.value),
             placeholder: t("todoPlaceholder"),
-            className: `flex-1 bg-transparent border-none outline-none text-sm transition-opacity no-drag-region
-                                    ${todo.completed ? "text-slate-500 line-through opacity-60" : "text-slate-200 focus:text-white"}`
+            className: `flex-1 min-w-0 border-none outline-none text-sm no-drag-region ${todo.completed ? "line-through" : ""}`,
+            style: { background: "transparent", color: todo.completed ? "var(--kb-fg-2, #b4b8c6)" : "var(--kb-fg-1, #f2f3f7)", height: 36 }
           }
         ),
         /* @__PURE__ */ window.React.createElement(
           "button",
           {
             onClick: () => deleteTodo(todo.id),
-            className: "w-6 h-6 rounded-md hover:bg-red-500/20 text-slate-500 hover:text-red-400 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity no-drag-region focus:opacity-100 group-hover:opacity-100 shrink-0"
+            "aria-label": t("closeLabel"),
+            className: "flex items-center justify-center no-drag-region shrink-0",
+            style: { width: 32, height: 32, borderRadius: 999, background: "var(--kb-bg-inset, rgba(255,255,255,0.06))", color: "var(--kb-fg-2, #b4b8c6)" }
           },
-          /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined text-[16px]" }, "close")
+          /* @__PURE__ */ window.React.createElement("span", { className: "material-symbols-outlined", style: iconStyle(false, 18) }, "delete")
         )
       )))
     );
@@ -322,6 +422,7 @@
     id: "todolist-plugin-btn",
     icon: "format_list_bulleted",
     label: "To-Do List",
+    tile: { template: "badge", sensitive: true },
     onClick: (e, anchorRect) => {
       const store = window.useAppStore.getState();
       const isOpen = store.activeExtensionPanelId === "todolist-plugin-panel";
@@ -343,4 +444,22 @@
     id: "todolist-plugin-panel",
     render: (props) => window.React.createElement(TodoListPanel, props)
   });
+  (() => {
+    const ext = barExt();
+    if (!ext) {
+      return;
+    }
+    publishTodoState(readTodos());
+    if (typeof ext.onBarItemChange === "function") {
+      try {
+        ext.onBarItemChange(TODO_BTN_ID, (c) => {
+          if (c && c.locale && c.locale !== barLocale) {
+            barLocale = c.locale;
+            publishTodoState(readTodos());
+          }
+        });
+      } catch (e) {
+      }
+    }
+  })();
 })();

@@ -23,5 +23,11 @@
     "https://raw.githubusercontent.com/Kobar-Project/KoBar-Assets/main/Plugins%20images/To-Do%20List/To-Do-List1.png",
     "https://raw.githubusercontent.com/Kobar-Project/KoBar-Assets/main/Plugins%20images/To-Do%20List/To-Do-List2.png"
   ],
+  "bar": {
+    "tile": {
+      "template": "badge",
+      "sensitive": true
+    }
+  },
   "apiVersion": "1.0.0"
 }
