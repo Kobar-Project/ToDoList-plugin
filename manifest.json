@@ -1,7 +1,7 @@
 {
   "id": "todolist-plugin",
   "name": "To-Do List",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "A minimal, draggable to-do list widget stored sequentially to prioritize your tasks.",
   "author": "KoBar",
   "entry": "index.js",
@@ -17,7 +17,7 @@
     "tr",
     "de"
   ],
-  "versionNote": "Updated plugin images.",
+  "versionNote": "New design for KoBar 1.5: quick add, All / Open / Done filters and progress; the bar tile shows the number of open tasks.",
   "image": "https://raw.githubusercontent.com/Kobar-Project/KoBar-Assets/main/Plugins%20images/To-Do%20List/todolist.png",
   "storeImage": [
     "https://raw.githubusercontent.com/Kobar-Project/KoBar-Assets/main/Plugins%20images/To-Do%20List/To-Do-List1.png",
